@@ -4,7 +4,7 @@ Live bus tracking for our college buses. Students can see where each bus is on a
 
 Made for the Cloud Computing Systems and Applications (BCS 304) project. Domain: **transportation**.
 
-Built with React (Vite + Tailwind), Firebase (Auth, Firestore, Cloud Functions) and Vercel.
+Built with React (Vite + Tailwind), Leaflet with OpenStreetMap tiles, Firebase (Auth, Firestore, Cloud Functions) and Vercel.
 
 ![landing page](docs/screenshots/01-landing.png)
 
@@ -180,7 +180,6 @@ npm run dev
 | ![admin dashboard](docs/screenshots/08-admin-dashboard.png) | ![people](docs/screenshots/05-admin-people.png) |
 | ![routes](docs/screenshots/11-admin-routes.png) | ![mobile](docs/screenshots/09-mobile.png) |
 
-(The map background is blank in these because the screenshots were taken offline. The street map loads normally in the real app.)
 
 ## Folder structure
 

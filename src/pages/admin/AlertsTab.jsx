@@ -8,9 +8,9 @@ import { PageTitle, ErrorBox } from '../../components/ui'
 import { ago } from '../StudentMap'
 
 const SEV = {
-  info: { icon: Info, cls: 'bg-lilac', label: 'Info' },
-  warning: { icon: AlertTriangle, cls: 'bg-sun', label: 'Delay' },
-  critical: { icon: OctagonAlert, cls: 'bg-coral', label: 'Urgent' },
+  info: { icon: Info, cls: 'bg-violet-soft text-violet-deep', label: 'Info' },
+  warning: { icon: AlertTriangle, cls: 'bg-amber-soft text-amber-deep', label: 'Delay' },
+  critical: { icon: OctagonAlert, cls: 'bg-red-soft text-red', label: 'Urgent' },
 }
 const QUICK = [
   ['warning', 'Bus 02 is running 15 minutes late because of traffic near ISBT.'],
@@ -49,7 +49,7 @@ export default function AlertsTab() {
         <div className="flex flex-wrap gap-2">
           {Object.entries(SEV).map(([k, { icon: I, cls, label }]) => (
             <button type="button" key={k} onClick={() => setForm({ ...form, severity: k })}
-              className={`flex items-center gap-1.5 rounded-xl border-2 border-ink px-3 py-1.5 text-xs font-extrabold transition ${form.severity === k ? `${cls} shadow-hard-sm` : 'bg-cream'}`}><I className="h-3.5 w-3.5" />{label}</button>
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${form.severity === k ? cls : 'bg-canvas text-muted hover:text-ink'}`}><I className="h-3.5 w-3.5" />{label}</button>
           ))}
           <select className="input ml-auto !w-auto !py-1.5 text-xs" value={form.routeId} onChange={(e) => setForm({ ...form, routeId: e.target.value })}>
             <option value="">All routes</option>
@@ -58,11 +58,11 @@ export default function AlertsTab() {
         </div>
         <textarea className="input min-h-[96px]" required maxLength={200} placeholder="What do students need to know?" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-extrabold uppercase text-ink/50">quick:</span>
+          <span className="text-xs text-muted">Quick fill:</span>
           {QUICK.map(([sev, msg]) => (
-            <button type="button" key={msg} onClick={() => setForm({ ...form, severity: sev, message: msg })} className="rounded-full border-2 border-ink/20 px-2.5 py-0.5 text-[11px] font-semibold hover:border-ink">{msg.slice(0, 26)}...</button>
+            <button type="button" key={msg} onClick={() => setForm({ ...form, severity: sev, message: msg })} className="rounded-full bg-canvas px-3 py-1 text-xs text-muted hover:text-ink">{msg.slice(0, 26)}...</button>
           ))}
-          <button disabled={busy} className="btn-dark ml-auto"><Send className="h-4 w-4" />Send to everyone</button>
+          <button disabled={busy} className="btn-primary ml-auto"><Send className="h-4 w-4" />Send to everyone</button>
         </div>
       </form>
 
@@ -70,17 +70,17 @@ export default function AlertsTab() {
         {alerts.data.map((a) => {
           const S = SEV[a.severity] || SEV.info
           return (
-            <div key={a.id} className={`flex items-start gap-3 rounded-2xl border-2 border-ink p-4 ${a.active ? `${S.cls} shadow-hard-sm` : 'bg-cream opacity-60'}`}>
-              <S.icon className="mt-0.5 h-5 w-5 shrink-0" />
+            <div key={a.id} className={`card flex items-start gap-3 p-4 ${a.active ? '' : 'opacity-55'}`}>
+              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${S.cls}`}><S.icon className="h-4 w-4" /></span>
               <div className="flex-1">
-                <div className="text-sm font-bold">{a.message}</div>
-                <div className="mt-0.5 text-xs font-semibold opacity-60">{a.routeId ? routes.data.find((r) => r.id === a.routeId)?.name : 'All routes'} · {a.createdByName} · {ago(toMs(a.createdAt))}</div>
+                <div className="pt-0.5 text-sm font-semibold">{a.message}</div>
+                <div className="mt-1 text-xs text-muted">{a.routeId ? routes.data.find((r) => r.id === a.routeId)?.name : 'All routes'} · {a.createdByName} · {ago(toMs(a.createdAt))}</div>
               </div>
-              {a.active ? <button onClick={() => resolve(a)} className="btn-ghost !px-3 !py-1 text-xs"><Check className="h-3.5 w-3.5" />Resolve</button> : <span className="text-xs font-bold">resolved</span>}
+              {a.active ? <button onClick={() => resolve(a)} className="btn-ghost btn-sm"><Check className="h-3.5 w-3.5" />Resolve</button> : <span className="text-xs text-muted">Resolved</span>}
             </div>
           )
         })}
-        {alerts.data.length === 0 && <p className="flex items-center gap-2 text-sm font-semibold text-ink/50"><Megaphone className="h-4 w-4" />No alerts sent yet.</p>}
+        {alerts.data.length === 0 && <p className="flex items-center gap-2 text-sm font-semibold text-muted"><Megaphone className="h-4 w-4" />No alerts sent yet.</p>}
       </div>
     </div>
   )

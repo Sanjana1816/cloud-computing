@@ -7,7 +7,7 @@ import LiveMap from '../../components/LiveMap'
 import { PageTitle, ErrorBox } from '../../components/ui'
 import { pathLength, fmtDist } from '../../lib/geo'
 
-const COLORS = ['#3D6BFF', '#FF7EC7', '#C6F45D', '#FFD43B', '#FF8A3D', '#BBA6FF', '#6EE7B7']
+const COLORS = ['#7C5CFF', '#FF5FA2', '#111111', '#16A34A', '#F59E0B', '#0EA5E9', '#E11D48']
 const empty = () => ({ id: null, name: '', code: '', color: COLORS[0], path: [], stops: [] })
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : w.endsWith('s') ? 'es' : 's'}`
 
@@ -49,7 +49,7 @@ export default function RoutesTab() {
   }
 
   const shown = draft
-    ? [...routes.data.filter((r) => r.id !== draft.id).map((r) => ({ ...r, color: '#cfcac0' })), { ...draft, id: 'draft', draft: true }]
+    ? [...routes.data.filter((r) => r.id !== draft.id).map((r) => ({ ...r, color: '#C9C7C0' })), { ...draft, id: 'draft', draft: true }]
     : routes.data
 
   return (
@@ -63,16 +63,16 @@ export default function RoutesTab() {
         <div className={`card relative h-[520px] overflow-hidden ${draft ? 'cursor-crosshair' : ''}`}>
           <LiveMap routes={shown} onMapClick={draft ? onMapClick : undefined} />
           {draft && (
-            <div className="absolute left-1/2 top-3 z-[500] flex -translate-x-1/2 gap-1 rounded-xl border-2 border-ink bg-cream p-1 shadow-hard-sm">
-              <button onClick={() => setTool('path')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-extrabold ${tool === 'path' ? 'bg-cobalt text-white' : ''}`}><Spline className="h-3.5 w-3.5" />Draw path</button>
-              <button onClick={() => setTool('stop')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-extrabold ${tool === 'stop' ? 'bg-pink' : ''}`}><MapPin className="h-3.5 w-3.5" />Add stop</button>
+            <div className="absolute left-1/2 top-3 z-[500] flex -translate-x-1/2 gap-1 rounded-xl border border-line bg-surface p-1 shadow-soft">
+              <button onClick={() => setTool('path')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${tool === 'path' ? 'bg-ink text-white' : 'text-muted'}`}><Spline className="h-3.5 w-3.5" />Draw path</button>
+              <button onClick={() => setTool('stop')} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${tool === 'stop' ? 'bg-ink text-white' : 'text-muted'}`}><MapPin className="h-3.5 w-3.5" />Add stop</button>
             </div>
           )}
         </div>
 
         {draft ? (
           <div className="card space-y-4 p-5">
-            <h2 className="text-xl font-extrabold">{draft.id ? 'Edit route' : 'New route'}</h2>
+            <h2 className="text-xl font-bold">{draft.id ? 'Edit route' : 'New route'}</h2>
             <div className="grid grid-cols-[80px_1fr] gap-3">
               <div><label className="label">Code</label><input className="input" placeholder="R3" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} /></div>
               <div><label className="label">Name</label><input className="input" placeholder="Campus to Metro" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>
@@ -82,11 +82,11 @@ export default function RoutesTab() {
               <div className="flex gap-2">
                 {COLORS.map((c) => (
                   <button key={c} onClick={() => setDraft({ ...draft, color: c })}
-                    className={`h-8 w-8 rounded-lg border-2 border-ink transition ${draft.color === c ? 'shadow-hard-sm -translate-y-0.5' : ''}`} style={{ background: c }} />
+                    className={`h-8 w-8 rounded-lg border border-line transition ${draft.color === c ? 'shadow-soft -translate-y-0.5' : ''}`} style={{ background: c }} />
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border-2 border-ink bg-paper p-3 text-xs font-semibold">
+            <div className="rounded-xl border border-line bg-canvas p-3 text-xs font-semibold">
               {draft.path.length} points · {fmtDist(pathLength(draft.path))} · {plural(draft.stops.length, 'stop')}
               <div className="mt-2 flex gap-2">
                 <button className="btn-ghost !px-2.5 !py-1 text-xs" disabled={!draft.path.length} onClick={() => setDraft({ ...draft, path: draft.path.slice(0, -1) })}><Undo2 className="h-3 w-3" />Undo</button>
@@ -95,10 +95,10 @@ export default function RoutesTab() {
             </div>
             <div className="max-h-48 space-y-1.5 overflow-y-auto">
               {draft.stops.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2 rounded-lg border-2 border-ink bg-cream px-3 py-1.5 text-sm font-semibold">
-                  <span className="grid h-5 w-5 place-items-center rounded-full border-2 border-ink bg-pink text-[10px] font-extrabold">{i + 1}</span>
+                <div key={s.id} className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-semibold">
+                  <span className="grid h-5 w-5 place-items-center rounded-full border border-line bg-ink text-[10px] text-white font-semibold">{i + 1}</span>
                   <span className="flex-1">{s.name}</span>
-                  <button onClick={() => setDraft({ ...draft, stops: draft.stops.filter((x) => x.id !== s.id) })} className="hover:text-coral"><X className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => setDraft({ ...draft, stops: draft.stops.filter((x) => x.id !== s.id) })} className="hover:text-red"><X className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
             </div>
@@ -111,16 +111,16 @@ export default function RoutesTab() {
           <div className="space-y-3">
             {routes.data.map((r) => (
               <div key={r.id} className="card flex items-center gap-3 p-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink font-mono text-xs font-bold" style={{ background: r.color, color: r.color === '#3D6BFF' ? '#fff' : '#141414' }}>{r.code}</span>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-line font-mono text-xs font-bold" style={{ background: r.color, color: '#fff' }}>{r.code}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-extrabold">{r.name}</div>
-                  <div className="text-xs font-medium text-ink/55">{plural((r.stops || []).length, 'stop')} · {fmtDist(pathLength(r.path || []))} · {plural(buses.data.filter((b) => b.routeId === r.id).length, 'bus')}</div>
+                  <div className="truncate font-semibold">{r.name}</div>
+                  <div className="text-xs font-medium text-muted">{plural((r.stops || []).length, 'stop')} · {fmtDist(pathLength(r.path || []))} · {plural(buses.data.filter((b) => b.routeId === r.id).length, 'bus')}</div>
                 </div>
-                <button className="rounded-lg border-2 border-ink bg-cream p-1.5 hover:shadow-hard-sm" title="Edit" onClick={() => { setDraft({ ...empty(), ...r }); setTool('path') }}><Pencil className="h-3.5 w-3.5" /></button>
-                <button className="rounded-lg border-2 border-ink bg-coral p-1.5 hover:shadow-hard-sm" title="Delete" onClick={() => remove(r)}><Trash2 className="h-3.5 w-3.5" /></button>
+                <button className="icon-btn !h-8 !w-8" title="Edit" onClick={() => { setDraft({ ...empty(), ...r }); setTool('path') }}><Pencil className="h-3.5 w-3.5" /></button>
+                <button className="icon-btn !h-8 !w-8 hover:!bg-red-soft hover:!text-red" title="Delete" onClick={() => remove(r)}><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}
-            {routes.data.length === 0 && <p className="text-sm font-semibold text-ink/50">No routes yet.</p>}
+            {routes.data.length === 0 && <p className="text-sm font-semibold text-muted">No routes yet.</p>}
           </div>
         )}
       </div>

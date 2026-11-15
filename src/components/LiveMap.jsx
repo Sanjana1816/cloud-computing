@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Marker, Tooltip, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -14,33 +14,33 @@ function cached(key, make) {
 
 function busIcon({ label, color, heading = 0, active, selected }) {
   const h = Math.round(heading / 5) * 5
-  const fill = active ? color : '#d6d3cc'
+  const fill = active ? color : '#B9B7B0'
+  const size = selected ? 42 : 36
   return cached(`bus|${label}|${color}|${h}|${active}|${selected}`, () => L.divIcon({
     className: '',
-    iconSize: [46, 46],
-    iconAnchor: [23, 23],
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
     html: `
-      <div style="position:relative;width:46px;height:46px;display:grid;place-items:center">
-        ${active ? `<span class="animate-pulsering" style="position:absolute;inset:8px;border-radius:12px;background:${color}"></span>` : ''}
-        <div style="position:absolute;inset:0;transform:rotate(${h}deg)">
-          <div style="position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:10px solid #141414"></div>
-        </div>
-        <div style="position:relative;width:34px;height:34px;border-radius:10px;background:${fill};border:2.5px solid #141414;
-          box-shadow:${selected ? '4px 4px 0 #FF7EC7' : '3px 3px 0 #141414'};
-          display:grid;place-items:center;color:#141414;font:800 13px 'Bricolage Grotesque',sans-serif">${label}</div>
+      <div style="position:relative;width:56px;height:56px;display:grid;place-items:center">
+        ${active ? `<span class="animate-pulsering" style="position:absolute;width:36px;height:36px;border-radius:999px;background:${color}"></span>` : ''}
+        ${active ? `<div style="position:absolute;inset:0;transform:rotate(${h}deg)">
+          <div style="position:absolute;left:50%;top:${selected ? 3 : 6}px;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid ${color}"></div>
+        </div>` : ''}
+        <div style="position:relative;width:${size}px;height:${size}px;border-radius:999px;background:${fill};border:3px solid #fff;
+          box-shadow:0 6px 16px -4px rgba(17,17,17,.35)${selected ? ',0 0 0 3px #111' : ''};
+          display:grid;place-items:center;color:#fff;font:800 13px 'Bricolage Grotesque',sans-serif">${label}</div>
       </div>`,
   }))
 }
 
-function stopIcon(highlighted) {
-  const s = highlighted ? 24 : 14
-  return cached(`stop|${highlighted}`, () => L.divIcon({
+function stopIcon(color, highlighted) {
+  return cached(`stop|${color}|${highlighted}`, () => L.divIcon({
     className: '',
-    iconSize: [s, s],
-    iconAnchor: [s / 2, s / 2],
+    iconSize: highlighted ? [26, 26] : [14, 14],
+    iconAnchor: highlighted ? [13, 13] : [7, 7],
     html: highlighted
-      ? `<div style="width:${s}px;height:${s}px;border-radius:999px;background:#FF7EC7;border:3px solid #141414;box-shadow:2px 2px 0 #141414;display:grid;place-items:center;font-size:11px">★</div>`
-      : `<div style="width:${s}px;height:${s}px;border-radius:999px;background:#fff;border:3px solid #141414"></div>`,
+      ? `<div style="width:26px;height:26px;border-radius:999px;background:#111;border:3px solid #fff;box-shadow:0 4px 12px -2px rgba(0,0,0,.4);display:grid;place-items:center"><div style="width:9px;height:9px;border-radius:999px;background:#D4F65C"></div></div>`
+      : `<div style="width:14px;height:14px;border-radius:999px;background:#fff;border:3px solid ${color};box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>`,
   }))
 }
 
@@ -82,62 +82,73 @@ function ClickCapture({ onMapClick }) {
   return null
 }
 
-function FitRoutes({ routes }) {
+function FitRoutes({ routes, padding }) {
   const map = useMap()
   const done = useRef(false)
   useEffect(() => {
     if (done.current) return
     const pts = routes.flatMap((r) => (r.path || []).map((p) => [p.lat, p.lng]))
-    if (pts.length > 1) { map.fitBounds(pts, { padding: [40, 40] }); done.current = true }
+    if (pts.length > 1) {
+      map.fitBounds(pts, { paddingTopLeft: padding?.[0] || [40, 40], paddingBottomRight: padding?.[1] || [40, 40] })
+      done.current = true
+    }
   }, [routes, map])
   return null
 }
 
-// shared map for student / driver / admin screens
+// light route colours (lime, amber...) get a dark bus marker so the white number stays readable
+export function isLight(hex = '#111111') {
+  const n = parseInt(hex.slice(1), 16)
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  return 0.299 * r + 0.587 * g + 0.114 * b > 170
+}
+
+// shared map for student / driver / admin / landing
 export default function LiveMap({
   routes = [], buses = [], selectedBusId, onSelectBus, highlightStopId, onStopClick,
-  flyTo, onMapClick, draftPath, className = '',
+  flyTo, onMapClick, draftPath, fitPadding, interactive = true, zoomControl = true, className = '',
 }) {
   const routeById = useMemo(() => Object.fromEntries(routes.map((r) => [r.id, r])), [routes])
   return (
-    <MapContainer center={CAMPUS} zoom={14} zoomControl={false} className={`h-full w-full ${className}`}>
+    <MapContainer center={CAMPUS} zoom={14} zoomControl={false} scrollWheelZoom={interactive} dragging={interactive}
+      doubleClickZoom={interactive} touchZoom={interactive} className={`h-full w-full ${className}`}>
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        subdomains="abcd"
-        maxZoom={20}
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        maxZoom={19}
       />
-      <FitRoutes routes={routes} />
+      {interactive && zoomControl && <ZoomControl position="bottomright" />}
+      <FitRoutes routes={routes} padding={fitPadding} />
       <FlyTo target={flyTo} />
       {onMapClick && <ClickCapture onMapClick={onMapClick} />}
 
       {routes.map((r) => (
         <Polyline key={r.id + '-casing'} positions={(r.path || []).map((p) => [p.lat, p.lng])}
-          pathOptions={{ color: '#141414', weight: 9, opacity: 1, lineJoin: 'round' }} />
+          pathOptions={{ color: '#ffffff', weight: 10, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }} />
       ))}
       {routes.map((r) => (
         <Polyline key={r.id} positions={(r.path || []).map((p) => [p.lat, p.lng])}
-          pathOptions={{ color: r.color, weight: 5, opacity: 1, lineJoin: 'round', dashArray: r.draft ? '8 8' : undefined }} />
+          pathOptions={{ color: r.color, weight: 5, opacity: 1, lineJoin: 'round', lineCap: 'round', dashArray: r.draft ? '1 10' : undefined }} />
       ))}
       {draftPath?.length > 0 && (
-        <Polyline positions={draftPath.map((p) => [p.lat, p.lng])} pathOptions={{ color: '#FF7EC7', weight: 5, dashArray: '8 8' }} />
+        <Polyline positions={draftPath.map((p) => [p.lat, p.lng])} pathOptions={{ color: '#111', weight: 4, dashArray: '1 10', lineCap: 'round' }} />
       )}
 
       {routes.flatMap((r) => (r.stops || []).map((s) => (
-        <Marker key={r.id + s.id} position={[s.lat, s.lng]} icon={stopIcon(highlightStopId === `${r.id}:${s.id}`)}
+        <Marker key={r.id + s.id} position={[s.lat, s.lng]} icon={stopIcon(r.color, highlightStopId === `${r.id}:${s.id}`)}
           eventHandlers={onStopClick ? { click: () => onStopClick(r, s) } : undefined}>
           <Tooltip direction="top" offset={[0, -8]}>{s.name}</Tooltip>
         </Marker>
       )))}
 
       {buses.filter((b) => b.live?.lat != null).map((b) => {
-        const color = routeById[b.routeId]?.color || '#C6F45D'
+        const color = routeById[b.routeId]?.color || '#111111'
         const label = (b.number || '').replace(/\D/g, '') || 'B'
         return (
           <AnimatedMarker key={b.id} position={[b.live.lat, b.live.lng]}
-            icon={busIcon({ label, color, heading: b.live.heading || 0, active: b.live.active, selected: b.id === selectedBusId })}
+            icon={busIcon({ label, color: isLight(color) ? '#111111' : color, heading: b.live.heading || 0, active: b.live.active, selected: b.id === selectedBusId })}
             onClick={onSelectBus ? () => onSelectBus(b.id) : undefined}>
-            <Tooltip direction="top" offset={[0, -22]}>{b.number}{b.live.active ? '' : ' (offline)'}</Tooltip>
+            <Tooltip direction="top" offset={[0, -24]}>{b.number}{b.live.active ? '' : ' (offline)'}</Tooltip>
           </AnimatedMarker>
         )
       })}

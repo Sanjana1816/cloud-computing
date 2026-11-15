@@ -47,7 +47,7 @@ export default function FleetTab() {
       <PageTitle title="Buses" sub="Add buses and put them on a route. Drivers get assigned from the People tab." />
       <ErrorBox>{err}</ErrorBox>
 
-      <form onSubmit={add} className="card grid gap-3 bg-sun/30 p-5 sm:grid-cols-2 lg:grid-cols-5">
+      <form onSubmit={add} className="card grid gap-3 bg-surface p-5 sm:grid-cols-2 lg:grid-cols-5">
         <div><label className="label">Bus number</label><input className="input" required placeholder="Bus 04" value={form.number} onChange={set('number')} /></div>
         <div><label className="label">Number plate</label><input className="input" required placeholder="DL 1PC 0000" value={form.plate} onChange={set('plate')} /></div>
         <div>
@@ -65,14 +65,14 @@ export default function FleetTab() {
         {fleet.map((b) => {
           const route = routes.find((r) => r.id === b.routeId)
           return (
-            <div key={b.id} className="card p-5 transition hover:-translate-y-0.5 hover:shadow-hard-lg">
+            <div key={b.id} className="card p-5 transition hover:shadow-lift">
               <div className="flex items-start gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-xl border-2 border-ink" style={{ background: route?.color || '#e7e3da', color: route?.color === '#3D6BFF' ? '#fff' : '#141414' }}><Bus className="h-6 w-6" /></span>
+                <span className="grid h-12 w-12 place-items-center rounded-xl border border-line" style={{ background: route?.color || '#E7E5DE', color: route ? '#fff' : '#6E6C66' }}><Bus className="h-6 w-6" /></span>
                 <div className="flex-1">
                   <div className="font-display text-lg font-extrabold">{b.number}</div>
-                  <div className="font-mono text-xs text-ink/55">{b.plate} · {b.capacity} seats</div>
+                  <div className="font-mono text-xs text-muted">{b.plate} · {b.capacity} seats</div>
                 </div>
-                <span className={`chip ${b.live?.active ? 'bg-lime' : 'bg-paper text-ink/50'}`}>{b.live?.active ? '● live' : 'idle'}</span>
+                <span className={`chip ${b.live?.active ? 'bg-lime-soft text-lime-deep' : 'bg-canvas text-muted'}`}>{b.live?.active ? '● live' : 'idle'}</span>
               </div>
               <div className="mt-4 space-y-3">
                 <div>
@@ -83,14 +83,14 @@ export default function FleetTab() {
                   </select>
                 </div>
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-ink/55">Driver: <span className="text-ink">{nameOf(b.driverId) || 'nobody yet'}</span></span>
-                  <button onClick={() => remove(b)} className="rounded-lg border-2 border-ink bg-coral p-1.5 hover:shadow-hard-sm" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <span className="text-muted">Driver: <span className="text-ink">{nameOf(b.driverId) || 'nobody yet'}</span></span>
+                  <button onClick={() => remove(b)} className="icon-btn !h-8 !w-8 hover:!bg-red-soft hover:!text-red" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
             </div>
           )
         })}
-        {fleet.length === 0 && <p className="text-sm font-semibold text-ink/50">No buses yet. Add one above or load the sample data from the Dashboard.</p>}
+        {fleet.length === 0 && <p className="text-sm font-semibold text-muted">No buses yet. Add one above or load the sample data from the Dashboard.</p>}
       </div>
     </div>
   )

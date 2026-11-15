@@ -15,7 +15,7 @@ export const DEMO_ROUTES = [
     id: 'route-north',
     name: 'Campus to North Campus',
     code: 'R1',
-    color: '#3D6BFF',
+    color: '#7C5CFF',
     path: [...northOut, ...northOut.slice(0, -1).reverse()],
     stops: [
       { id: 's1', name: 'IGDTUW Main Gate', ...P(28.6656, 77.2324) },
@@ -29,7 +29,7 @@ export const DEMO_ROUTES = [
     id: 'route-old-delhi',
     name: 'Red Fort Loop',
     code: 'R2',
-    color: '#FF7EC7',
+    color: '#FF5FA2',
     path: [
       P(28.6656, 77.2324), P(28.6640, 77.2329), P(28.6622, 77.2330), P(28.6608, 77.2324),
       P(28.6592, 77.2314), P(28.6579, 77.2303), P(28.6570, 77.2328), P(28.6563, 77.2360),

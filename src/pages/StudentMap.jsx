@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import {
-  Zap, WifiOff, MapPin, AlertTriangle, Info, BellRing, ChevronUp, Gauge, Clock3, X, Bus,
+  Zap, WifiOff, MapPin, AlertTriangle, Info, BellRing, Gauge, Clock3, X, Bus, ChevronDown,
 } from 'lucide-react'
-import LiveMap from '../components/LiveMap'
-import { TopBar, Pill } from '../components/ui'
+import LiveMap, { isLight } from '../components/LiveMap'
+import { TopBar, Pill, LiveDot } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { db } from '../lib/firebase'
 import { useRoutes, useBuses, useLive, useActiveAlerts, toMs, useTicker } from '../lib/data'
 import { etaSeconds, fmtEta, fmtDist } from '../lib/geo'
 
 export const OCCUPANCY = {
-  seats: { label: 'Seats free', cls: 'bg-mint' },
-  standing: { label: 'Standing', cls: 'bg-sun' },
-  full: { label: 'Full', cls: 'bg-coral' },
+  seats: { label: 'Seats free', cls: 'bg-lime-soft text-lime-deep', on: 'bg-lime text-ink' },
+  standing: { label: 'Standing', cls: 'bg-amber-soft text-amber-deep', on: 'bg-amber text-ink' },
+  full: { label: 'Full', cls: 'bg-red-soft text-red', on: 'bg-red text-white' },
 }
 
 const STALE_MS = 60_000
@@ -61,7 +61,22 @@ export function ago(ms) {
   return `${Math.floor(s / 3600)}h ago`
 }
 
-const ALERT_STYLE = { critical: 'bg-coral', warning: 'bg-sun', info: 'bg-lilac' }
+const ALERT_STYLE = {
+  critical: { icon: AlertTriangle, cls: 'bg-red-soft text-red' },
+  warning: { icon: AlertTriangle, cls: 'bg-amber-soft text-amber-deep' },
+  info: { icon: Info, cls: 'bg-violet-soft text-violet-deep' },
+}
+
+export function BusBadge({ bus, route, size = 'h-11 w-11 text-sm' }) {
+  const on = bus.live?.active
+  const color = route?.color || '#111111'
+  const bg = on ? (isLight(color) ? '#111111' : color) : '#E7E5DE'
+  return (
+    <span className={`grid shrink-0 place-items-center rounded-2xl font-display font-extrabold ${size}`} style={{ background: bg, color: on ? '#fff' : '#6E6C66' }}>
+      {(bus.number || '').replace(/\D/g, '')}
+    </span>
+  )
+}
 
 export default function StudentMap() {
   useTicker(1000)
@@ -97,9 +112,9 @@ export default function StudentMap() {
       const key = `${b.id}:${homeStopId}`
       if (b.eta.seconds < 120 && !notified.current[key]) {
         notified.current[key] = true
-        const msg = `${b.number} is almost at ${homeStop.name}. Start walking!`
+        const msg = `${b.number} is almost at ${homeStop.name}. Time to head out!`
         setToast(msg)
-        if ('Notification' in window && Notification.permission === 'granted') new Notification('RouteRadar', { body: msg, icon: '/favicon.svg' })
+        if ('Notification' in window && Notification.permission === 'granted') new Notification('routeradar', { body: msg, icon: '/favicon.svg' })
         if (navigator.vibrate) navigator.vibrate([200, 100, 200])
         setTimeout(() => setToast(null), 6000)
       }
@@ -118,13 +133,14 @@ export default function StudentMap() {
   }
 
   const visibleAlerts = alerts.data.filter((a) => !dismissed.includes(a.id))
+  const firstName = (profile?.name || '').split(' ')[0]
 
   return (
     <div className="flex h-full flex-col">
       <TopBar>
         <div className="hidden items-center gap-2 lg:flex">
-          <Pill icon={Zap} tone="lime">synced{latency != null ? ` in ${latency}ms` : ''}</Pill>
-          <Pill icon={Bus} tone="sun">{liveCount} live</Pill>
+          <Pill icon={Zap} tone="lime">Synced{latency != null ? ` in ${latency} ms` : ''}</Pill>
+          <Pill icon={Bus} tone="gray">{liveCount} live</Pill>
         </div>
       </TopBar>
 
@@ -137,102 +153,124 @@ export default function StudentMap() {
           highlightStopId={profile?.homeStop}
           onStopClick={(r, s) => saveStop(`${r.id}:${s.id}`)}
           flyTo={flyTo}
+          fitPadding={window.innerWidth >= 1024 ? [[420, 60], [60, 60]] : [[30, 30], [30, 340]]}
         />
 
         {/* admin alerts */}
-        <div className="pointer-events-none absolute left-1/2 top-3 z-[500] flex w-[min(92%,460px)] -translate-x-1/2 flex-col gap-2 lg:left-auto lg:right-4 lg:translate-x-0">
-          {visibleAlerts.map((a) => (
-            <div key={a.id} className={`pointer-events-auto flex animate-pop items-start gap-3 rounded-2xl border-2 border-ink px-4 py-3 text-sm shadow-hard ${ALERT_STYLE[a.severity] || ALERT_STYLE.info}`}>
-              {a.severity === 'info' ? <Info className="mt-0.5 h-5 w-5 shrink-0" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />}
-              <div className="flex-1">
-                <div className="font-bold">{a.message}</div>
-                <div className="mt-0.5 text-xs font-semibold opacity-60">{a.routeId ? routeById[a.routeId]?.name : 'All routes'} · {ago(toMs(a.createdAt))}</div>
+        <div className="pointer-events-none absolute left-1/2 top-4 z-[500] flex w-[min(92%,420px)] -translate-x-1/2 flex-col gap-2 lg:left-auto lg:right-4 lg:translate-x-0">
+          {visibleAlerts.map((a) => {
+            const A = ALERT_STYLE[a.severity] || ALERT_STYLE.info
+            return (
+              <div key={a.id} className="pointer-events-auto flex animate-pop items-start gap-3 rounded-2xl bg-surface p-3.5 shadow-lift ring-1 ring-line">
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${A.cls}`}><A.icon className="h-4 w-4" /></span>
+                <div className="flex-1 pt-0.5">
+                  <div className="text-sm font-semibold leading-snug">{a.message}</div>
+                  <div className="mt-1 text-xs text-muted">{a.routeId ? routeById[a.routeId]?.name : 'All routes'} · {ago(toMs(a.createdAt))}</div>
+                </div>
+                <button onClick={() => setDismissed((d) => [...d, a.id])} className="rounded-full p-1 text-muted hover:bg-canvas hover:text-ink"><X className="h-4 w-4" /></button>
               </div>
-              <button onClick={() => setDismissed((d) => [...d, a.id])} className="rounded-md p-0.5 hover:bg-ink/10"><X className="h-4 w-4" /></button>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {toast && (
-          <div className="absolute bottom-6 left-1/2 z-[600] flex -translate-x-1/2 animate-pop items-center gap-3 rounded-2xl border-2 border-ink bg-lime px-5 py-3 font-extrabold shadow-hard-lg">
-            <BellRing className="h-5 w-5 animate-wiggle" /> {toast}
+          <div className="absolute bottom-6 left-1/2 z-[600] flex -translate-x-1/2 animate-pop items-center gap-3 rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-lift">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-lime text-ink"><BellRing className="h-4 w-4" /></span> {toast}
           </div>
         )}
 
         {/* side panel on desktop, bottom sheet on phones */}
-        <aside className={`card absolute inset-x-2 bottom-2 z-[500] flex max-h-[55%] flex-col overflow-hidden transition-transform lg:inset-y-4 lg:left-4 lg:right-auto lg:max-h-none lg:w-[370px] ${sheetOpen ? '' : 'translate-y-[calc(100%-52px)] lg:translate-y-0'}`}>
-          <button onClick={() => setSheetOpen((o) => !o)} className="flex items-center justify-center py-2 lg:hidden">
-            <span className="h-1.5 w-10 rounded-full bg-ink/25" />
-            <ChevronUp className={`absolute right-4 h-4 w-4 transition ${sheetOpen ? 'rotate-180' : ''}`} />
+        <aside className={`absolute inset-x-2 bottom-2 z-[500] flex max-h-[58%] flex-col overflow-hidden rounded-3xl bg-surface shadow-lift ring-1 ring-line transition-transform duration-300 lg:inset-y-4 lg:left-4 lg:right-auto lg:max-h-none lg:w-[380px] ${sheetOpen ? '' : 'translate-y-[calc(100%-56px)] lg:translate-y-0'}`}>
+          <button onClick={() => setSheetOpen((o) => !o)} className="flex items-center justify-center pt-2.5 lg:hidden" aria-label="Toggle panel">
+            <span className="h-1 w-10 rounded-full bg-line" />
           </button>
 
-          {next && (
-            <div className="mx-3 mb-1 mt-1 flex items-center gap-3 rounded-xl border-2 border-ink bg-lime p-3 lg:mt-3">
-              <div className="flex-1">
-                <div className="text-[11px] font-extrabold uppercase tracking-wide">next bus to your stop</div>
-                <div className="font-display text-lg font-extrabold leading-tight">{next.number} · {fmtEta(next.eta.seconds)}</div>
-              </div>
-              <span className="font-mono text-xs">{fmtDist(next.eta.metres)}</span>
+          <div className="space-y-4 p-5 pb-4">
+            <div>
+              <div className="text-sm text-muted">Hi {firstName}</div>
+              <h2 className="text-2xl font-extrabold">Where’s my bus?</h2>
             </div>
-          )}
 
-          <div className="border-b-2 border-ink px-4 pb-4 pt-2 lg:pt-3">
-            <label className="label flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> my stop</label>
-            <select className="input" value={profile?.homeStop || ''} onChange={(e) => saveStop(e.target.value)}>
-              <option value="">Pick your stop...</option>
-              {routes.map((r) => (
-                <optgroup key={r.id} label={`${r.code || ''} ${r.name}`}>
-                  {(r.stops || []).map((s) => <option key={s.id} value={`${r.id}:${s.id}`}>{s.name}</option>)}
-                </optgroup>
-              ))}
-            </select>
-            <p className="mt-2 text-[11px] font-medium text-ink/55">or tap a stop on the map. We’ll ping you when a bus is ~2 min away.</p>
+            {next ? (
+              <div className="rounded-2xl bg-ink p-4 text-white">
+                <div className="flex items-center gap-3">
+                  <BusBadge bus={next} route={next.route} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs text-white/50">Next to {homeStop?.name}</div>
+                    <div className="font-semibold">{next.number}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-display text-3xl font-extrabold leading-none text-lime">{fmtEta(next.eta.seconds)}</div>
+                    <div className="mt-1 text-[11px] text-white/50">{fmtDist(next.eta.metres)} away</div>
+                  </div>
+                </div>
+              </div>
+            ) : homeStop ? (
+              <div className="rounded-2xl bg-canvas p-4 text-sm text-muted">No bus is heading to <b className="text-ink">{homeStop.name}</b> right now.</div>
+            ) : null}
+
+            <div>
+              <label className="label">My stop</label>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <select className="input appearance-none pl-10 pr-10" value={profile?.homeStop || ''} onChange={(e) => saveStop(e.target.value)}>
+                  <option value="">Pick your stop</option>
+                  {routes.map((r) => (
+                    <optgroup key={r.id} label={`${r.code || ''} ${r.name}`}>
+                      {(r.stops || []).map((s) => <option key={s.id} value={`${r.id}:${s.id}`}>{s.name}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              </div>
+              <p className="mt-2 text-xs text-muted">You can also tap a stop on the map. We’ll ping you when a bus is about 2 min away.</p>
+            </div>
           </div>
 
-          <div className="flex-1 space-y-2.5 overflow-y-auto bg-paper/60 p-3">
-            {error && <div className="rounded-xl border-2 border-ink bg-coral/30 p-3 text-sm font-semibold">Couldn’t load data: {error.code || error.message}</div>}
+          <div className="flex items-center justify-between border-t border-line px-5 pb-1 pt-4">
+            <span className="eyebrow">All buses</span>
+            <span className="text-xs text-muted">{liveCount} of {fleet.length} running</span>
+          </div>
+          <div className="flex-1 overflow-y-auto px-2 pb-2">
+            {error && <div className="m-3 rounded-2xl bg-red-soft p-3 text-sm text-red">Couldn’t load data: {error.code || error.message}</div>}
             {rows.length === 0 && !error && (
-              <div className="p-6 text-center text-sm font-semibold text-ink/50">No buses yet. The admin needs to add them.</div>
+              <div className="p-8 text-center text-sm text-muted">No buses yet. The admin needs to add them.</div>
             )}
             {rows.map((b) => {
               const on = b.live?.active
               const occ = OCCUPANCY[b.live?.occupancy]
               return (
                 <button key={b.id} onClick={() => focusBus(b)}
-                  className={`w-full rounded-xl border-2 border-ink bg-cream p-3 text-left transition hover:-translate-y-0.5 ${selected === b.id ? 'shadow-hard' : 'shadow-hard-sm'}`}>
+                  className={`w-full rounded-2xl p-3 text-left transition hover:bg-canvas ${selected === b.id ? 'bg-canvas' : ''}`}>
                   <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink font-display text-sm font-extrabold"
-                      style={{ background: on ? b.route?.color || '#C6F45D' : '#e7e3da', color: on && b.route?.color === '#3D6BFF' ? '#fff' : '#141414' }}>
-                      {(b.number || '').replace(/\D/g, '')}
-                    </span>
+                    <BusBadge bus={b} route={b.route} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold">{b.number}</span>
-                        <span className="font-mono text-[10px] text-ink/40">{b.route?.code}</span>
+                      <div className="flex items-center gap-2 font-semibold">
+                        {b.number}
+                        {on && <LiveDot />}
                       </div>
-                      <div className="truncate text-xs font-medium text-ink/60">{b.route?.name || 'No route'}</div>
+                      <div className="truncate text-xs text-muted">{b.route?.name || 'No route'}</div>
                     </div>
                     <div className="text-right">
                       {b.eta ? (
                         <>
-                          <div className="font-display text-xl font-extrabold leading-tight">{fmtEta(b.eta.seconds)}</div>
-                          <div className="font-mono text-[10px] text-ink/50">{fmtDist(b.eta.metres)}</div>
+                          <div className="font-display text-lg font-extrabold leading-tight">{fmtEta(b.eta.seconds)}</div>
+                          <div className="text-[11px] text-muted">{fmtDist(b.eta.metres)}</div>
                         </>
                       ) : on ? (
-                        <span className="chip bg-lime">● live</span>
+                        <span className="chip bg-lime-soft text-lime-deep">Live</span>
                       ) : b.live?.stale ? (
-                        <span className="chip bg-sun"><WifiOff className="h-3 w-3" /> lost signal</span>
+                        <span className="chip bg-amber-soft text-amber-deep"><WifiOff className="h-3 w-3" /> Lost signal</span>
                       ) : (
-                        <span className="chip bg-paper text-ink/50">not running</span>
+                        <span className="text-xs text-muted">Not running</span>
                       )}
                     </div>
                   </div>
-                  {(on || b.live?.stale) && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-ink/60">
-                      {occ && <span className={`chip ${occ.cls}`}>{occ.label}</span>}
+                  {on && (
+                    <div className="ml-14 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
+                      {occ && <span className={`chip !py-0.5 ${occ.cls}`}>{occ.label}</span>}
                       <span className="flex items-center gap-1"><Gauge className="h-3 w-3" />{Math.round((b.live.speed || 0) * 3.6)} km/h</span>
                       <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" />{ago(b.live.updated)}</span>
-                      {b.live.driverName && <span className="ml-auto truncate">{b.live.driverName}</span>}
                     </div>
                   )}
                 </button>
