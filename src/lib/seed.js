@@ -1,0 +1,60 @@
+// sample routes around IGDTUW (Kashmere Gate). loaded from the admin panel
+import { doc, writeBatch, serverTimestamp } from 'firebase/firestore'
+import { db } from './firebase'
+
+const P = (lat, lng) => ({ lat, lng })
+
+const northOut = [
+  P(28.6656, 77.2324), P(28.6668, 77.2302), P(28.6676, 77.2286), P(28.6700, 77.2274),
+  P(28.6735, 77.2259), P(28.6768, 77.2249), P(28.6805, 77.2241), P(28.6845, 77.2230),
+  P(28.6880, 77.2219), P(28.6905, 77.2198), P(28.6928, 77.2176), P(28.6950, 77.2149),
+]
+
+export const DEMO_ROUTES = [
+  {
+    id: 'route-north',
+    name: 'Campus to North Campus',
+    code: 'R1',
+    color: '#3D6BFF',
+    path: [...northOut, ...northOut.slice(0, -1).reverse()],
+    stops: [
+      { id: 's1', name: 'IGDTUW Main Gate', ...P(28.6656, 77.2324) },
+      { id: 's2', name: 'Kashmere Gate ISBT', ...P(28.6676, 77.2286) },
+      { id: 's3', name: 'Civil Lines Metro', ...P(28.6768, 77.2249) },
+      { id: 's4', name: 'Vidhan Sabha', ...P(28.6880, 77.2219) },
+      { id: 's5', name: 'Vishwavidyalaya Metro', ...P(28.6950, 77.2149) },
+    ],
+  },
+  {
+    id: 'route-old-delhi',
+    name: 'Red Fort Loop',
+    code: 'R2',
+    color: '#FF7EC7',
+    path: [
+      P(28.6656, 77.2324), P(28.6640, 77.2329), P(28.6622, 77.2330), P(28.6608, 77.2324),
+      P(28.6592, 77.2314), P(28.6579, 77.2303), P(28.6570, 77.2328), P(28.6563, 77.2360),
+      P(28.6561, 77.2392), P(28.6566, 77.2412), P(28.6590, 77.2402), P(28.6615, 77.2385),
+      P(28.6638, 77.2360), P(28.6656, 77.2324),
+    ],
+    stops: [
+      { id: 's1', name: 'IGDTUW Main Gate', ...P(28.6656, 77.2324) },
+      { id: 's2', name: 'GPO Lothian Road', ...P(28.6608, 77.2324) },
+      { id: 's3', name: 'Chandni Chowk Metro', ...P(28.6579, 77.2303) },
+      { id: 's4', name: 'Red Fort', ...P(28.6566, 77.2412) },
+      { id: 's5', name: 'Salimgarh Bypass', ...P(28.6638, 77.2360) },
+    ],
+  },
+]
+
+export const DEMO_BUSES = [
+  { id: 'bus-01', number: 'Bus 01', plate: 'DL 1PC 4521', routeId: 'route-north', capacity: 52 },
+  { id: 'bus-02', number: 'Bus 02', plate: 'DL 1PC 7788', routeId: 'route-north', capacity: 52 },
+  { id: 'bus-03', number: 'Bus 03', plate: 'DL 1PD 1203', routeId: 'route-old-delhi', capacity: 40 },
+]
+
+export async function seedDemoData() {
+  const batch = writeBatch(db)
+  DEMO_ROUTES.forEach(({ id, ...r }) => batch.set(doc(db, 'routes', id), { ...r, updatedAt: serverTimestamp() }))
+  DEMO_BUSES.forEach(({ id, ...b }) => batch.set(doc(db, 'buses', id), { driverId: null, ...b, updatedAt: serverTimestamp() }, { merge: true }))
+  await batch.commit()
+}

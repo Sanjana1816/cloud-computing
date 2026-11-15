@@ -1,0 +1,32 @@
+{
+  "name": "route-radar",
+  "version": "1.0.0",
+  "description": "RouteRadar - real-time campus bus tracking on Firebase + Vercel",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "emulators": "firebase emulators:start --only auth,firestore",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-route-radar \"node --test tests/rules.test.mjs\""
+  },
+  "dependencies": {
+    "firebase": "^13.3.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.73.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.5"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "autoprefixer": "^10.6.2",
+    "firebase-tools": "^15.36.0",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.8"
+  },
+  "private": true,
+  "type": "module"
+}

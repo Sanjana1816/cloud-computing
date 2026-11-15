@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    background-image: radial-gradient(#14141418 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+  h1, h2, h3 { @apply font-display; }
+  ::selection { @apply bg-lime text-ink; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border-2 border-ink bg-cream shadow-hard; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink px-4 py-2.5 text-sm font-bold
+      text-ink shadow-hard-sm transition hover:-translate-y-0.5 hover:shadow-hard
+      active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
+      disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-primary { @apply btn bg-lime; }
+  .btn-ghost { @apply btn bg-cream; }
+  .btn-dark { @apply btn bg-ink text-paper; }
+  .btn-danger { @apply btn bg-coral text-ink; }
+  .input {
+    @apply w-full rounded-xl border-2 border-ink bg-cream px-3.5 py-2.5 text-sm font-medium text-ink outline-none
+      placeholder:text-ink/40 transition focus:shadow-hard-sm focus:-translate-y-px;
+  }
+  .label { @apply mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-ink/60; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full border-2 border-ink px-2.5 py-0.5 text-[11px] font-bold text-ink; }
+  .sticker { @apply inline-flex items-center gap-1.5 rounded-lg border-2 border-ink px-3 py-1 text-xs font-extrabold uppercase tracking-wide shadow-hard-sm; }
+  .scribble { background: linear-gradient(transparent 60%, theme('colors.lime') 60%); }
+}
+
+/* Leaflet */
+.leaflet-container.leaflet-container { background: #F2EEE3; font-family: inherit; }
+.leaflet-control-attribution { background: rgba(255,253,248,.85) !important; color: #555 !important; font-size: 10px; }
+.leaflet-control-attribution a { color: #141414 !important; }
+.leaflet-tooltip {
+  background: #141414; color: #FFF6E9; border: 0; border-radius: 8px; font-weight: 700; font-size: 12px;
+  box-shadow: 2px 2px 0 #C6F45D; padding: 4px 8px;
+}
+.leaflet-tooltip-top:before { border-top-color: #141414; }
+.leaflet-div-icon { background: transparent; border: none; }
