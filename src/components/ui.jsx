@@ -24,13 +24,13 @@ export function Logo({ size = 'md' }) {
 }
 
 const ROLE_STYLE = {
-  student: 'bg-violet-soft text-violet-deep',
+  passenger: 'bg-violet-soft text-violet-deep',
   driver: 'bg-amber-soft text-amber-deep',
   admin: 'bg-pink-soft text-pink',
 }
 
 export function RoleChip({ role }) {
-  return <span className={`chip ${ROLE_STYLE[role] || ROLE_STYLE.student} capitalize`}>{role}</span>
+  return <span className={`chip ${ROLE_STYLE[role] || ROLE_STYLE.passenger} capitalize`}>{role}</span>
 }
 
 export function TopBar({ children }) {
@@ -81,24 +81,6 @@ const TONES = {
   pink: 'bg-pink-soft text-pink',
   gray: 'bg-canvas text-muted',
   red: 'bg-red-soft text-red',
-}
-
-export function Pill({ icon: Icon, children, tone = 'lime' }) {
-  return (
-    <span className={`chip ${TONES[tone]}`}>
-      {Icon && <Icon className="h-3.5 w-3.5" />}
-      {children}
-    </span>
-  )
-}
-
-export function LiveDot({ className = '' }) {
-  return (
-    <span className={`relative inline-flex h-2 w-2 ${className}`}>
-      <span className="absolute inset-0 animate-ping rounded-full bg-lime-deep/40" />
-      <span className="relative h-2 w-2 rounded-full bg-lime-deep" />
-    </span>
-  )
 }
 
 export function FullScreenLoader({ label = 'Loading' }) {

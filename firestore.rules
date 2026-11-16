@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // roles:
-//   student - read routes/buses/live/alerts, change own stop
+//   passenger - read routes/buses/live/alerts, change own stop
 //   driver  - same + write location of their own bus (only after admin verifies them)
 //   admin   - manage everything
 
@@ -27,10 +27,10 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
 
-      // sign up as student or unverified driver only (never admin)
+      // sign up as passenger or unverified driver only (never admin)
       allow create: if signedIn() && request.auth.uid == uid
-        && request.resource.data.role in ['student', 'driver']
-        && request.resource.data.approved == (request.resource.data.role == 'student')
+        && request.resource.data.role in ['passenger', 'driver']
+        && request.resource.data.approved == (request.resource.data.role == 'passenger')
         && request.resource.data.busId == null
         && request.resource.data.email == request.auth.token.email;
 

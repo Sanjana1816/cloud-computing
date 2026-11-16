@@ -4,9 +4,9 @@ import {
   Bus, Users, Activity, MonitorSmartphone, Database, Globe2, ShieldCheck, Server, Sparkles, Loader2, Smartphone, Monitor, ChevronRight,
 } from 'lucide-react'
 import LiveMap from '../../components/LiveMap'
-import { Stat, PageTitle, ErrorBox, LiveDot } from '../../components/ui'
+import { Stat, PageTitle, ErrorBox } from '../../components/ui'
 import { useCollection, toMs, useTicker } from '../../lib/data'
-import { useFleet, ago, BusBadge } from '../StudentMap'
+import { useFleet, ago, BusBadge } from '../PassengerMap'
 import { seedDemoData } from '../../lib/seed'
 import { fmtDist } from '../../lib/geo'
 
@@ -47,7 +47,7 @@ export default function Overview() {
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <Stat label="Buses live" value={`${liveBuses.length} / ${fleet.length}`} sub="sharing location now" icon={Bus} tone="lime" />
-        <Stat label="People online" value={online.length} sub={['student', 'driver', 'admin'].map((r) => `${byRole(r)} ${r}${byRole(r) === 1 ? '' : 's'}`).join(' · ')} icon={Users} tone="violet" />
+        <Stat label="People online" value={online.length} sub={['passenger', 'driver', 'admin'].map((r) => `${byRole(r)} ${r}${byRole(r) === 1 ? '' : 's'}`).join(' · ')} icon={Users} tone="violet" />
         <Stat label="Trips today" value={tripsToday.length} sub={`${fmtDist(kmToday)} driven`} icon={Activity} tone="amber" />
         <Stat label="Devices" value={online.length} sub={`${phones} phone${phones === 1 ? '' : 's'} · ${online.length - phones} laptop${online.length - phones === 1 ? '' : 's'}`} icon={MonitorSmartphone} tone="pink" />
       </div>
@@ -62,7 +62,7 @@ export default function Overview() {
               <div key={b.id} className="flex items-center gap-3 rounded-2xl px-2 py-2.5 hover:bg-canvas">
                 <BusBadge bus={b} route={routeOf(b)} size="h-10 w-10 text-sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 text-sm font-semibold">{b.number}{b.live?.active && <LiveDot />}</div>
+                  <div className="flex items-center gap-2 text-sm font-semibold">{b.number}</div>
                   <div className="truncate text-xs text-muted">{b.live?.driverName || 'No driver'} · {ago(b.live?.updated)}</div>
                 </div>
                 <span className="text-xs font-medium text-muted">{b.live?.active ? `${Math.round((b.live.speed || 0) * 3.6)} km/h` : b.live?.stale ? 'lost signal' : 'idle'}</span>
@@ -70,7 +70,7 @@ export default function Overview() {
             ))}
           </div>
           <div className="mt-3 border-t border-line pt-4">
-            <div className="eyebrow">Online now</div>
+            <div className="text-sm font-semibold">Online now</div>
             <div className="mt-2 max-h-32 space-y-2 overflow-y-auto">
               {online.length === 0 && <p className="text-xs text-muted">Nobody right now.</p>}
               {online.map((p) => (

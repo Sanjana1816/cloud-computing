@@ -131,7 +131,7 @@ export function useTripBroadcaster({ bus, route, user, profile }) {
     }
   }, [bus])
 
-  // stop GPS if the page closes; students see "signal lost" after 60s
+  // stop GPS if the page closes; passengers see "signal lost" after 60s
   useEffect(() => () => stopFns.current.forEach((f) => f()), [])
 
   return { ...state, start, stop, setOccupancy }

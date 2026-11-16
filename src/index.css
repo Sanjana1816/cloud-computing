@@ -27,7 +27,6 @@
   }
   .label { @apply mb-1.5 block text-xs font-semibold text-muted; }
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold; }
-  .eyebrow { @apply text-[11px] font-bold uppercase tracking-[.12em] text-muted; }
 }
 
 /* Leaflet (OpenStreetMap tiles, softened a little so routes stand out) */

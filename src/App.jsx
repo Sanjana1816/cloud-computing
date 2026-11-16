@@ -7,7 +7,7 @@ import AuthPage from './pages/AuthPage'
 import SetupNeeded from './pages/SetupNeeded'
 
 // Map-heavy pages are code-split so the landing page loads fast from the CDN.
-const StudentMap = lazy(() => import('./pages/StudentMap'))
+const PassengerMap = lazy(() => import('./pages/PassengerMap'))
 const DriverConsole = lazy(() => import('./pages/DriverConsole'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 
@@ -18,7 +18,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/map" element={<RequireRole roles={['student', 'driver']}><StudentMap /></RequireRole>} />
+        <Route path="/map" element={<RequireRole roles={['passenger', 'driver']}><PassengerMap /></RequireRole>} />
         <Route path="/driver" element={<RequireRole roles={['driver']}><DriverConsole /></RequireRole>} />
         <Route path="/admin" element={<RequireRole roles={['admin']}><AdminPanel /></RequireRole>} />
         <Route path="*" element={<Navigate to="/" replace />} />

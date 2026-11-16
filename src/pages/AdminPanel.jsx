@@ -29,7 +29,6 @@ export default function AdminPanel() {
       <TopBar />
       <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
         <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-line bg-surface p-2 md:w-60 md:flex-col md:border-b-0 md:border-r md:p-4">
-          <div className="eyebrow mb-2 hidden px-3 pt-2 md:block">Transport office</div>
           {TABS.map(({ id, label, icon: I }) => (
             <button key={id} onClick={() => choose(id)}
               className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${tab === id ? 'bg-ink text-white' : 'text-muted hover:bg-canvas hover:text-ink'}`}>

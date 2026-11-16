@@ -5,7 +5,7 @@ import { db } from '../../lib/firebase'
 import { useCollection, useRoutes, toMs } from '../../lib/data'
 import { useAuth } from '../../context/AuthContext'
 import { PageTitle, ErrorBox } from '../../components/ui'
-import { ago } from '../StudentMap'
+import { ago } from '../PassengerMap'
 
 const SEV = {
   info: { icon: Info, cls: 'bg-violet-soft text-violet-deep', label: 'Info' },
@@ -42,7 +42,7 @@ export default function AlertsTab() {
 
   return (
     <div className="space-y-5">
-      <PageTitle title="Alerts" sub="Whatever you send here pops up on every student’s screen at the same time. Try it with two phones side by side." />
+      <PageTitle title="Alerts" sub="Whatever you send here pops up on every passenger’s screen at the same time. Try it with two phones side by side." />
       <ErrorBox>{err}</ErrorBox>
 
       <form onSubmit={send} className="card space-y-4 p-5">
@@ -56,7 +56,7 @@ export default function AlertsTab() {
             {routes.data.map((r) => <option key={r.id} value={r.id}>{r.code} {r.name}</option>)}
           </select>
         </div>
-        <textarea className="input min-h-[96px]" required maxLength={200} placeholder="What do students need to know?" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+        <textarea className="input min-h-[96px]" required maxLength={200} placeholder="What do passengers need to know?" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted">Quick fill:</span>
           {QUICK.map(([sev, msg]) => (

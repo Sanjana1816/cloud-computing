@@ -3,7 +3,7 @@ import { doc, setDoc, updateDoc, writeBatch, serverTimestamp } from 'firebase/fi
 import { Plus, Trash2, Bus } from 'lucide-react'
 import { db } from '../../lib/firebase'
 import { useCollection } from '../../lib/data'
-import { useFleet } from '../StudentMap'
+import { useFleet } from '../PassengerMap'
 import { PageTitle, ErrorBox } from '../../components/ui'
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')

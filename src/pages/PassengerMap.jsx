@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import {
-  Zap, WifiOff, MapPin, AlertTriangle, Info, BellRing, Gauge, Clock3, X, Bus, ChevronDown,
+  WifiOff, MapPin, AlertTriangle, Info, BellRing, Gauge, Clock3, X, ChevronDown,
 } from 'lucide-react'
 import LiveMap, { isLight } from '../components/LiveMap'
-import { TopBar, Pill, LiveDot } from '../components/ui'
+import { TopBar } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { db } from '../lib/firebase'
 import { useRoutes, useBuses, useLive, useActiveAlerts, toMs, useTicker } from '../lib/data'
@@ -34,24 +34,6 @@ export function useFleet() {
   return { routes: routes.data, fleet, loading: routes.loading || buses.loading, error: routes.error || buses.error || live.error, live: live.data }
 }
 
-// time from the driver's phone writing a point to this screen getting it
-function useSyncLatency(live) {
-  const seen = useRef({})
-  const [latency, setLatency] = useState(null)
-  useEffect(() => {
-    live.forEach((l) => {
-      if (l.clientTs && seen.current[l.id] !== l.clientTs) {
-        if (seen.current[l.id] !== undefined) {
-          const ms = Date.now() - l.clientTs
-          if (ms >= 0 && ms < 10_000) setLatency(ms)
-        }
-        seen.current[l.id] = l.clientTs
-      }
-    })
-  }, [live])
-  return latency
-}
-
 export function ago(ms) {
   if (!ms) return 'never'
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000))
@@ -78,12 +60,11 @@ export function BusBadge({ bus, route, size = 'h-11 w-11 text-sm' }) {
   )
 }
 
-export default function StudentMap() {
+export default function PassengerMap() {
   useTicker(1000)
   const { profile, user } = useAuth()
-  const { routes, fleet, live, error } = useFleet()
+  const { routes, fleet, error } = useFleet()
   const alerts = useActiveAlerts()
-  const latency = useSyncLatency(live)
   const [selected, setSelected] = useState(null)
   const [flyTo, setFlyTo] = useState(null)
   const [sheetOpen, setSheetOpen] = useState(true)
@@ -105,14 +86,14 @@ export default function StudentMap() {
   const liveCount = fleet.filter((b) => b.live?.active).length
   const next = rows.find((b) => b.eta)
 
-  // ping the student when a bus is ~2 min from their stop
+  // ping the passenger when a bus is ~2 min from their stop
   useEffect(() => {
     rows.forEach((b) => {
       if (!b.eta) return
       const key = `${b.id}:${homeStopId}`
       if (b.eta.seconds < 120 && !notified.current[key]) {
         notified.current[key] = true
-        const msg = `${b.number} is almost at ${homeStop.name}. Time to head out!`
+        const msg = `Route ${b.route?.code} (${b.number}) is about 2 min from ${homeStop.name}.`
         setToast(msg)
         if ('Notification' in window && Notification.permission === 'granted') new Notification('routeradar', { body: msg, icon: '/favicon.svg' })
         if (navigator.vibrate) navigator.vibrate([200, 100, 200])
@@ -133,16 +114,10 @@ export default function StudentMap() {
   }
 
   const visibleAlerts = alerts.data.filter((a) => !dismissed.includes(a.id))
-  const firstName = (profile?.name || '').split(' ')[0]
 
   return (
     <div className="flex h-full flex-col">
-      <TopBar>
-        <div className="hidden items-center gap-2 lg:flex">
-          <Pill icon={Zap} tone="lime">Synced{latency != null ? ` in ${latency} ms` : ''}</Pill>
-          <Pill icon={Bus} tone="gray">{liveCount} live</Pill>
-        </div>
-      </TopBar>
+      <TopBar />
 
       <div className="relative flex-1 overflow-hidden">
         <LiveMap
@@ -186,18 +161,15 @@ export default function StudentMap() {
           </button>
 
           <div className="space-y-4 p-5 pb-4">
-            <div>
-              <div className="text-sm text-muted">Hi {firstName}</div>
-              <h2 className="text-2xl font-extrabold">Where’s my bus?</h2>
-            </div>
+            <h2 className="text-2xl font-extrabold">Where’s my bus?</h2>
 
             {next ? (
               <div className="rounded-2xl bg-ink p-4 text-white">
                 <div className="flex items-center gap-3">
                   <BusBadge bus={next} route={next.route} />
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs text-white/50">Next to {homeStop?.name}</div>
-                    <div className="font-semibold">{next.number}</div>
+                    <div className="text-xs text-white/50">Next bus to {homeStop?.name}</div>
+                    <div className="font-semibold">Route {next.route?.code} · {next.number}</div>
                   </div>
                   <div className="text-right">
                     <div className="font-display text-3xl font-extrabold leading-none text-lime">{fmtEta(next.eta.seconds)}</div>
@@ -206,11 +178,11 @@ export default function StudentMap() {
                 </div>
               </div>
             ) : homeStop ? (
-              <div className="rounded-2xl bg-canvas p-4 text-sm text-muted">No bus is heading to <b className="text-ink">{homeStop.name}</b> right now.</div>
+              <div className="rounded-2xl bg-canvas p-4 text-sm text-muted">No bus is on its way to <b className="text-ink">{homeStop.name}</b> right now.</div>
             ) : null}
 
             <div>
-              <label className="label">My stop</label>
+              <label className="label">My bus stop</label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                 <select className="input appearance-none pl-10 pr-10" value={profile?.homeStop || ''} onChange={(e) => saveStop(e.target.value)}>
@@ -223,18 +195,18 @@ export default function StudentMap() {
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               </div>
-              <p className="mt-2 text-xs text-muted">You can also tap a stop on the map. We’ll ping you when a bus is about 2 min away.</p>
+              <p className="mt-2 text-xs text-muted">Or tap a stop on the map. You’ll get a notification when a bus is about 2 minutes away.</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between border-t border-line px-5 pb-1 pt-4">
-            <span className="eyebrow">All buses</span>
-            <span className="text-xs text-muted">{liveCount} of {fleet.length} running</span>
+            <span className="text-sm font-semibold">Buses</span>
+            <span className="text-xs text-muted">{liveCount} of {fleet.length} on the road</span>
           </div>
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             {error && <div className="m-3 rounded-2xl bg-red-soft p-3 text-sm text-red">Couldn’t load data: {error.code || error.message}</div>}
             {rows.length === 0 && !error && (
-              <div className="p-8 text-center text-sm text-muted">No buses yet. The admin needs to add them.</div>
+              <div className="p-8 text-center text-sm text-muted">No buses added yet.</div>
             )}
             {rows.map((b) => {
               const on = b.live?.active
@@ -245,11 +217,8 @@ export default function StudentMap() {
                   <div className="flex items-center gap-3">
                     <BusBadge bus={b} route={b.route} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 font-semibold">
-                        {b.number}
-                        {on && <LiveDot />}
-                      </div>
-                      <div className="truncate text-xs text-muted">{b.route?.name || 'No route'}</div>
+                      <div className="font-semibold">{b.route ? `Route ${b.route.code}` : 'No route'} <span className="font-normal text-muted">· {b.number}</span></div>
+                      <div className="truncate text-xs text-muted">{b.route?.name}</div>
                     </div>
                     <div className="text-right">
                       {b.eta ? (
@@ -258,9 +227,9 @@ export default function StudentMap() {
                           <div className="text-[11px] text-muted">{fmtDist(b.eta.metres)}</div>
                         </>
                       ) : on ? (
-                        <span className="chip bg-lime-soft text-lime-deep">Live</span>
+                        <span className="text-xs font-semibold text-lime-deep">On the road</span>
                       ) : b.live?.stale ? (
-                        <span className="chip bg-amber-soft text-amber-deep"><WifiOff className="h-3 w-3" /> Lost signal</span>
+                        <span className="flex items-center gap-1 text-xs font-semibold text-amber-deep"><WifiOff className="h-3 w-3" /> Lost signal</span>
                       ) : (
                         <span className="text-xs text-muted">Not running</span>
                       )}
@@ -268,7 +237,7 @@ export default function StudentMap() {
                   </div>
                   {on && (
                     <div className="ml-14 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
-                      {occ && <span className={`chip !py-0.5 ${occ.cls}`}>{occ.label}</span>}
+                      {occ && <span className={`rounded-md px-1.5 py-0.5 font-semibold ${occ.cls}`}>{occ.label}</span>}
                       <span className="flex items-center gap-1"><Gauge className="h-3 w-3" />{Math.round((b.live.speed || 0) * 3.6)} km/h</span>
                       <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" />{ago(b.live.updated)}</span>
                     </div>

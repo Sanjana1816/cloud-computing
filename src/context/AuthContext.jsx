@@ -9,16 +9,16 @@ import { auth, db } from '../lib/firebase'
 const AuthCtx = createContext(null)
 export const useAuth = () => useContext(AuthCtx)
 
-async function ensureProfile(user, { name, role = 'student' } = {}) {
+async function ensureProfile(user, { name, role = 'passenger' } = {}) {
   const ref = doc(db, 'users', user.uid)
   const snap = await getDoc(ref)
   if (snap.exists()) return
-  // new users are student or unapproved driver. rules block anything else
+  // new users are passenger or unapproved driver. rules block anything else
   await setDoc(ref, {
     name: name || user.displayName || user.email.split('@')[0],
     email: user.email,
     role,
-    approved: role === 'student',
+    approved: role === 'passenger',
     busId: null,
     homeStop: null,
     createdAt: serverTimestamp(),

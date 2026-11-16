@@ -29,7 +29,7 @@ export default function TripsTab() {
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-line bg-canvas text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
+            <tr className="border-b border-line bg-canvas text-left text-xs font-semibold text-muted">
               <th className="px-4 py-3">Bus</th><th className="px-4 py-3">Driver</th><th className="px-4 py-3">Started</th><th className="px-4 py-3">Duration</th><th className="px-4 py-3">Distance</th><th className="px-4 py-3">Updates</th>
             </tr>
           </thead>

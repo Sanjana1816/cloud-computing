@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, Tooltip, ZoomControl, useMap
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-const CAMPUS = [28.6656, 77.2324]
+const CITY_CENTER = [28.6656, 77.2324]
 
 // cache icons so re-renders don't rebuild the DOM (that would restart the pulse)
 const iconCache = new Map()
@@ -103,14 +103,14 @@ export function isLight(hex = '#111111') {
   return 0.299 * r + 0.587 * g + 0.114 * b > 170
 }
 
-// shared map for student / driver / admin / landing
+// shared map for passenger / driver / admin / landing
 export default function LiveMap({
   routes = [], buses = [], selectedBusId, onSelectBus, highlightStopId, onStopClick,
   flyTo, onMapClick, draftPath, fitPadding, interactive = true, zoomControl = true, className = '',
 }) {
   const routeById = useMemo(() => Object.fromEntries(routes.map((r) => [r.id, r])), [routes])
   return (
-    <MapContainer center={CAMPUS} zoom={14} zoomControl={false} scrollWheelZoom={interactive} dragging={interactive}
+    <MapContainer center={CITY_CENTER} zoom={14} zoomControl={false} scrollWheelZoom={interactive} dragging={interactive}
       doubleClickZoom={interactive} touchZoom={interactive} className={`h-full w-full ${className}`}>
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

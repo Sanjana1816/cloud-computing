@@ -3,10 +3,10 @@ import {
   Play, Square, Satellite, Route as RouteIcon, ShieldCheck, Clock3, Gauge, Navigation2, Cpu, UploadCloud, Filter, Bus, Loader2,
 } from 'lucide-react'
 import LiveMap from '../components/LiveMap'
-import { TopBar, Pill, ErrorBox, LiveDot } from '../components/ui'
+import { TopBar, ErrorBox } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useTripBroadcaster } from '../lib/broadcaster'
-import { useFleet, OCCUPANCY, BusBadge } from './StudentMap'
+import { useFleet, OCCUPANCY, BusBadge } from './PassengerMap'
 import { useTicker } from '../lib/data'
 import { fmtDist } from '../lib/geo'
 
@@ -49,10 +49,10 @@ export default function DriverConsole() {
 
   if (!isAdmin && !profile.approved) {
     return <Waiting icon={ShieldCheck} tone="bg-amber-soft text-amber-deep" title="Waiting for approval"
-      text="For safety, the transport admin has to verify you before you can share a bus location. Ask them to approve you from the admin panel." />
+      text="The depot admin has to verify you before you can share a bus location. Ask them to approve you from the admin panel." />
   }
   if (!isAdmin && !profile.busId) {
-    return <Waiting icon={Bus} tone="bg-lime-soft text-lime-deep" title="You’re verified" text="Now the admin just needs to assign you a bus." />
+    return <Waiting icon={Bus} tone="bg-lime-soft text-lime-deep" title="You’re verified" text="Now the depot admin just needs to assign you a bus." />
   }
   if (!loading && !bus && !isAdmin) {
     return <Waiting icon={Bus} tone="bg-red-soft text-red" title="Bus not found" text="The bus you were assigned was removed. Ask the admin for another one." />
@@ -62,12 +62,7 @@ export default function DriverConsole() {
 
   return (
     <div className="flex h-full flex-col">
-      <TopBar>
-        <div className="hidden items-center gap-2 md:flex">
-          <Pill icon={UploadCloud} tone="lime">{t.sent} sent</Pill>
-          <Pill icon={Filter} tone="violet">{t.filtered} filtered</Pill>
-        </div>
-      </TopBar>
+      <TopBar />
 
       <div className="grid flex-1 overflow-hidden lg:grid-cols-[420px_1fr]">
         <div className="order-2 space-y-4 overflow-y-auto p-4 lg:order-1 lg:p-5">
@@ -85,7 +80,7 @@ export default function DriverConsole() {
                 <div>
                   <div className="font-display text-xl font-extrabold">{bus.number}</div>
                   <div className="text-sm text-muted">{bus.plate}</div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted"><RouteIcon className="h-3.5 w-3.5" />{route?.name || 'No route set'}</div>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted"><RouteIcon className="h-3.5 w-3.5" />{route ? `Route ${route.code} · ${route.name}` : 'No route set'}</div>
                 </div>
               </div>
             )}
@@ -106,7 +101,7 @@ export default function DriverConsole() {
             ) : (
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-lime"><LiveDot /> On trip {t.mode === 'sim' ? '(demo)' : ''}</span>
+                  <span className="text-sm font-semibold text-lime">On trip{t.mode === 'sim' ? ' (demo)' : ''}</span>
                   <span className="font-mono text-2xl">{clock(Date.now() - t.startedAt)}</span>
                 </div>
                 <button onClick={t.stop}
@@ -142,7 +137,7 @@ export default function DriverConsole() {
             This phone works out speed and direction itself, drops bad GPS points, and only uploads when the bus actually moves
             (at most every 2 s, with a check-in every 10 s). That means less load on the database and a smaller bill.
           </div>
-          <div className="flex items-center gap-2 px-1 text-xs text-muted"><Clock3 className="h-3.5 w-3.5" />Keep this page open while driving. If it closes, students see “lost signal” after 60 s.</div>
+          <div className="flex items-center gap-2 px-1 text-xs text-muted"><Clock3 className="h-3.5 w-3.5" />Keep this page open while driving. If it closes, passengers see “lost signal” after 60 s.</div>
         </div>
 
         <div className="order-1 h-[40vh] lg:order-2 lg:h-auto">

@@ -5,7 +5,7 @@ import { db } from '../../lib/firebase'
 import { useCollection, useBuses, toMs } from '../../lib/data'
 import { RoleChip, PageTitle, ErrorBox } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
-import { ago } from '../StudentMap'
+import { ago } from '../PassengerMap'
 
 export default function UsersTab() {
   const { user: me } = useAuth()
@@ -73,7 +73,7 @@ export default function UsersTab() {
           <input className="input pl-10" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="flex gap-1 rounded-xl border border-line bg-surface p-1">
-          {['all', 'pending', 'student', 'driver', 'admin'].map((f) => (
+          {['all', 'pending', 'passenger', 'driver', 'admin'].map((f) => (
             <button key={f} onClick={() => setFilter(f)} className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize ${filter === f ? 'bg-ink text-white' : 'hover:bg-canvas'}`}>{f}</button>
           ))}
         </div>
@@ -82,7 +82,7 @@ export default function UsersTab() {
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
-            <tr className="border-b border-line bg-canvas text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
+            <tr className="border-b border-line bg-canvas text-left text-xs font-semibold text-muted">
               <th className="px-4 py-3">User</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Bus</th><th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
@@ -96,7 +96,7 @@ export default function UsersTab() {
                 <td className="px-4 py-3">
                   {u.id === me.uid ? <RoleChip role={u.role} /> : (
                     <select className="input !w-auto !py-1.5 text-xs" value={u.role} onChange={(e) => setRole(u, e.target.value)}>
-                      <option value="student">student</option><option value="driver">driver</option><option value="admin">admin</option>
+                      <option value="passenger">passenger</option><option value="driver">driver</option><option value="admin">admin</option>
                     </select>
                   )}
                 </td>

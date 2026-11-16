@@ -74,8 +74,8 @@ export default function RoutesTab() {
           <div className="card space-y-4 p-5">
             <h2 className="text-xl font-bold">{draft.id ? 'Edit route' : 'New route'}</h2>
             <div className="grid grid-cols-[80px_1fr] gap-3">
-              <div><label className="label">Code</label><input className="input" placeholder="R3" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} /></div>
-              <div><label className="label">Name</label><input className="input" placeholder="Campus to Metro" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>
+              <div><label className="label">Code</label><input className="input" placeholder="118" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} /></div>
+              <div><label className="label">Name</label><input className="input" placeholder="Kashmere Gate to ITO" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>
             </div>
             <div>
               <label className="label">Colour</label>
