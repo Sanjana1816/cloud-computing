@@ -144,6 +144,13 @@ npm run dev
 2. Add the six `VITE_FIREBASE_*` env variables and deploy.
 3. In Firebase > Authentication > Settings > Authorized domains, add the `.vercel.app` domain so Google login works.
 
+### Deploying on Netlify instead
+
+1. On [netlify.com](https://netlify.com), Add new site > Import an existing project > GitHub, pick this repo.
+2. Build settings come from `netlify.toml` (build `npm run build`, publish `dist`).
+3. Site configuration > Environment variables: add the six `VITE_FIREBASE_*` variables, then Deploys > Trigger deploy.
+4. In Firebase > Authentication > Settings > Authorized domains, add the `.netlify.app` domain.
+
 ## Demo plan
 
 1. Landing page: explain the problem.
