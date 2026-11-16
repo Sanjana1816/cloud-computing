@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { orderBy, limit } from 'firebase/firestore'
 import {
-  Bus, Users, Activity, Timer, Database, Globe2, ShieldCheck, Server, Sparkles, Loader2, Smartphone, Monitor, ChevronRight,
+  Bus, Users, Activity, Timer, Database, Globe2, ShieldCheck, Server, Sparkles, Loader2, Play, Square, Smartphone, Monitor, ChevronRight,
 } from 'lucide-react'
 import LiveMap from '../../components/LiveMap'
 import { Stat, PageTitle, ErrorBox } from '../../components/ui'
 import { useCollection, toMs, useTicker } from '../../lib/data'
 import { useFleet, ago, BusBadge, useSyncLatency } from '../PassengerMap'
 import { seedDemoData } from '../../lib/seed'
+import { startDemoTraffic, stopDemoTraffic, subscribeDemoTraffic } from '../../lib/demoTraffic'
+import { useAuth } from '../../context/AuthContext'
 import { fmtDist } from '../../lib/geo'
 
 const ONLINE_MS = 60_000
@@ -20,6 +22,10 @@ export default function Overview() {
   const trips = useCollection('trips', [orderBy('startedAt', 'desc'), limit(50)])
   const [seeding, setSeeding] = useState(false)
   const [seedError, setSeedError] = useState('')
+  const { user, profile } = useAuth()
+  const [traffic, setTraffic] = useState({ running: false })
+  useEffect(() => subscribeDemoTraffic(setTraffic), [])
+  const minsLeft = traffic.running ? Math.max(1, Math.ceil((traffic.stopAt - Date.now()) / 60000)) : 0
 
   const online = presence.data.filter((p) => Date.now() - (toMs(p.lastSeen) || 0) < ONLINE_MS)
   const byRole = (r) => online.filter((p) => p.role === r).length
@@ -32,7 +38,7 @@ export default function Overview() {
 
   async function seed() {
     setSeeding(true); setSeedError('')
-    try { await seedDemoData() } catch (e) { setSeedError(e.code || e.message) } finally { setSeeding(false) }
+    try { await seedDemoData({ uid: user.uid, name: profile.name }) } catch (e) { setSeedError(e.code || e.message) } finally { setSeeding(false) }
   }
 
   return (
@@ -40,9 +46,19 @@ export default function Overview() {
       <PageTitle title="Dashboard" sub="Everything here updates live.">
         {!loading && fleet.length === 0 && (
           <button onClick={seed} disabled={seeding} className="btn-primary">
-            {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Load sample routes and buses
+            {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Load sample data
           </button>
         )}
+        {!loading && fleet.length > 0 && (traffic.running ? (
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted">Demo traffic: {traffic.count} buses, stops in {minsLeft} min</span>
+            <button onClick={stopDemoTraffic} className="btn-ghost"><Square className="h-3.5 w-3.5 fill-current" />Stop</button>
+          </div>
+        ) : (
+          <button onClick={() => startDemoTraffic({ fleet, routes, user })} className="btn-ghost" title="Drives every idle bus along its route for 20 minutes">
+            <Play className="h-3.5 w-3.5 fill-current" />Start demo traffic
+          </button>
+        ))}
       </PageTitle>
       <ErrorBox>{seedError}</ErrorBox>
 

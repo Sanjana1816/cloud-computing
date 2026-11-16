@@ -52,7 +52,8 @@ Built with React (Vite + Tailwind), Leaflet with OpenStreetMap tiles, Firebase (
 - draw routes and stops by clicking on the map
 - send alerts to everyone
 - trip log and audit log
-- one button to load two sample routes from Kashmere Gate
+- one button to load sample data: 6 city routes traced along real Delhi roads (101, 204, 181, 534, 405, 966), 12 buses, a week of trip history and two alerts
+- "Start demo traffic": drives every idle bus along its route for 20 minutes so the map looks like a normal day
 
 ## Architecture
 
@@ -134,7 +135,7 @@ npm run dev
    npx firebase deploy --only firestore:rules,firestore:indexes
    ```
 6. Sign up in the app, then in Firestore set your user's `role` to `admin` and reload.
-7. Admin > Dashboard > **Load sample routes + buses**.
+7. Admin > Dashboard > **Load sample data**, then **Start demo traffic** if you want buses moving.
 8. Optional (needs the Blaze plan): `cd functions && npm install && cd .. && npx firebase deploy --only functions`
 
 ### Deploying on Vercel

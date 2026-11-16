@@ -39,9 +39,11 @@ export function pointAlong(path, d) {
   return { ...path[0], heading: 0 }
 }
 
-// how far along the route point p is
-export function progressOnPath(path, p) {
-  let best = Infinity, bestProg = 0, acc = 0
+// every place along the route that passes within `near` metres of p, as distance from the start.
+// out-and-back routes pass most stops twice, so there can be more than one.
+function projections(path, p) {
+  const out = []
+  let acc = 0
   for (let i = 1; i < path.length; i++) {
     const a = path[i - 1], b = path[i]
     const seg = haversine(a, b)
@@ -52,11 +54,31 @@ export function progressOnPath(path, p) {
     const len2 = dx * dx + dy * dy
     const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2))
     const q = { lat: ay + dy * t, lng: (ax + dx * t) / kx }
-    const dist = haversine(p, q)
-    if (dist < best) { best = dist; bestProg = acc + seg * t }
+    out.push({ prog: acc + seg * t, dist: haversine(p, q), bearing: bearing(a, b) })
     acc += seg
   }
-  return bestProg
+  return out
+}
+
+const angleGap = (a, b) => Math.abs(((a - b + 540) % 360) - 180)
+
+// how far along the route point p is. with a heading, prefer the side of the road going that way
+export function progressOnPath(path, p, heading) {
+  let best = null
+  for (const c of projections(path, p)) {
+    const penalty = heading != null && angleGap(c.bearing, heading) > 90 ? 500 : 0
+    const score = c.dist + penalty
+    if (!best || score < best.score) best = { ...c, score }
+  }
+  return best ? best.prog : 0
+}
+
+// all distinct passes of the route by a stop (within 60 m)
+function stopPasses(path, stop) {
+  const near = projections(path, stop).filter((c) => c.dist < 60).map((c) => c.prog).sort((x, y) => x - y)
+  const passes = []
+  near.forEach((v) => { if (!passes.length || v - passes.at(-1) > 100) passes.push(v) })
+  return passes.length ? passes : [progressOnPath(path, stop)]
 }
 
 const AVG_SPEED = 22 / 3.6 // fallback 22 km/h in m/s (city bus average)
@@ -65,10 +87,10 @@ const AVG_SPEED = 22 / 3.6 // fallback 22 km/h in m/s (city bus average)
 export function etaSeconds(route, live, stop) {
   if (!route?.path?.length || !live || !stop) return null
   const total = pathLength(route.path)
-  const busProg = progressOnPath(route.path, live)
-  let stopProg = progressOnPath(route.path, stop)
-  if (stopProg < busProg - 30) stopProg += total // stop already passed: next loop
-  const dist = Math.max(0, stopProg - busProg)
+  const busProg = progressOnPath(route.path, live, live.speed > 1 ? live.heading : undefined)
+  // the next time the bus reaches this stop, going round again if it already passed every pass
+  const ahead = stopPasses(route.path, stop).map((v) => (v < busProg - 30 ? v + total : v))
+  const dist = Math.max(0, Math.min(...ahead) - busProg)
   const v = live.speed > 1 ? 0.6 * live.speed + 0.4 * AVG_SPEED : AVG_SPEED
   return { seconds: dist / v, metres: dist }
 }
