@@ -34,6 +34,24 @@ export function useFleet() {
   return { routes: routes.data, fleet, loading: routes.loading || buses.loading, error: routes.error || buses.error || live.error, live: live.data }
 }
 
+// time between the driver's phone writing a point and this screen receiving it
+export function useSyncLatency(live) {
+  const seen = useRef({})
+  const [latency, setLatency] = useState(null)
+  useEffect(() => {
+    live.forEach((l) => {
+      if (l.clientTs && seen.current[l.id] !== l.clientTs) {
+        if (seen.current[l.id] !== undefined) {
+          const ms = Date.now() - l.clientTs
+          if (ms >= 0 && ms < 10_000) setLatency(ms)
+        }
+        seen.current[l.id] = l.clientTs
+      }
+    })
+  }, [live])
+  return latency
+}
+
 export function ago(ms) {
   if (!ms) return 'never'
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000))
@@ -63,7 +81,8 @@ export function BusBadge({ bus, route, size = 'h-11 w-11 text-sm' }) {
 export default function PassengerMap() {
   useTicker(1000)
   const { profile, user } = useAuth()
-  const { routes, fleet, error } = useFleet()
+  const { routes, fleet, error, live } = useFleet()
+  const latency = useSyncLatency(live)
   const alerts = useActiveAlerts()
   const [selected, setSelected] = useState(null)
   const [flyTo, setFlyTo] = useState(null)
@@ -201,7 +220,7 @@ export default function PassengerMap() {
 
           <div className="flex items-center justify-between border-t border-line px-5 pb-1 pt-4">
             <span className="text-sm font-semibold">Buses</span>
-            <span className="text-xs text-muted">{liveCount} of {fleet.length} on the road</span>
+            <span className="text-xs text-muted">{liveCount} of {fleet.length} on the road{latency != null ? ` · synced in ${latency} ms` : ''}</span>
           </div>
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             {error && <div className="m-3 rounded-2xl bg-red-soft p-3 text-sm text-red">Couldn’t load data: {error.code || error.message}</div>}

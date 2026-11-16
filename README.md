@@ -95,7 +95,7 @@ flowchart LR
 | Cloud for transportation (Unit III) | The whole project. |
 | Cloud providers (Unit IV) | Firebase is part of Google Cloud. |
 | High availability | Vercel's CDN, Google-managed database replication, offline cache, and a scheduled function that marks buses offline if a phone dies. |
-| Real-time sync | Every screen uses Firestore `onSnapshot`, so bus positions, alerts and approvals show up without refreshing. |
+| Real-time sync | Every screen uses Firestore `onSnapshot`, so bus positions, alerts and approvals show up without refreshing. The passenger page and admin dashboard show the measured sync delay in ms. |
 
 ## Security
 

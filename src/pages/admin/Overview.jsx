@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { orderBy, limit } from 'firebase/firestore'
 import {
-  Bus, Users, Activity, MonitorSmartphone, Database, Globe2, ShieldCheck, Server, Sparkles, Loader2, Smartphone, Monitor, ChevronRight,
+  Bus, Users, Activity, Timer, Database, Globe2, ShieldCheck, Server, Sparkles, Loader2, Smartphone, Monitor, ChevronRight,
 } from 'lucide-react'
 import LiveMap from '../../components/LiveMap'
 import { Stat, PageTitle, ErrorBox } from '../../components/ui'
 import { useCollection, toMs, useTicker } from '../../lib/data'
-import { useFleet, ago, BusBadge } from '../PassengerMap'
+import { useFleet, ago, BusBadge, useSyncLatency } from '../PassengerMap'
 import { seedDemoData } from '../../lib/seed'
 import { fmtDist } from '../../lib/geo'
 
@@ -14,7 +14,8 @@ const ONLINE_MS = 60_000
 
 export default function Overview() {
   useTicker(2000)
-  const { routes, fleet, loading } = useFleet()
+  const { routes, fleet, loading, live } = useFleet()
+  const latency = useSyncLatency(live)
   const presence = useCollection('presence')
   const trips = useCollection('trips', [orderBy('startedAt', 'desc'), limit(50)])
   const [seeding, setSeeding] = useState(false)
@@ -47,9 +48,9 @@ export default function Overview() {
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <Stat label="Buses live" value={`${liveBuses.length} / ${fleet.length}`} sub="sharing location now" icon={Bus} tone="lime" />
-        <Stat label="People online" value={online.length} sub={['passenger', 'driver', 'admin'].map((r) => `${byRole(r)} ${r}${byRole(r) === 1 ? '' : 's'}`).join(' · ')} icon={Users} tone="violet" />
+        <Stat label="People online" value={online.length} sub={`${['passenger', 'driver', 'admin'].map((r) => `${byRole(r)} ${r}${byRole(r) === 1 ? '' : 's'}`).join(' · ')} · ${phones} on phones`} icon={Users} tone="violet" />
         <Stat label="Trips today" value={tripsToday.length} sub={`${fmtDist(kmToday)} driven`} icon={Activity} tone="amber" />
-        <Stat label="Devices" value={online.length} sub={`${phones} phone${phones === 1 ? '' : 's'} · ${online.length - phones} laptop${online.length - phones === 1 ? '' : 's'}`} icon={MonitorSmartphone} tone="pink" />
+        <Stat label="Sync delay" value={latency != null ? `${latency} ms` : '-'} sub="driver’s phone to this screen" icon={Timer} tone="pink" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
